@@ -23,6 +23,11 @@ echo "== fresh install =="
 adb uninstall "$PKG" >/dev/null 2>&1 || true
 adb install -r apk/preview-app-debug.apk 2>&1 | tee "$OUT/install.txt" || true
 
+echo "== grant runtime permissions =="
+for perm in POST_NOTIFICATIONS RECORD_AUDIO; do
+  adb shell pm grant "$PKG" android.permission.$perm 2>/dev/null && echo "granted $perm" || true
+done
+
 echo "== first launch to create prefs =="
 adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1 || true
 sleep 25
@@ -65,6 +70,7 @@ echo "== relaunch poster home =="
 adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1 || true
 sleep 30
 capture 01-home-top
+adb shell dumpsys window 2>/dev/null | grep -E "mCurrentFocus" | head -2 | tee -a "$OUT/focus.txt" || true
 
 echo "== home filmstrip =="
 for i in $(seq 1 18); do
@@ -93,7 +99,7 @@ sleep 15
 capture 06-discover-root
 
 echo "== discover filmstrip =="
-for i in $(seq 1 14); do
+for i in $(seq 1 16); do
   key KEYCODE_DPAD_DOWN 1
   capture "$(printf '07-discover-down-%02d' "$i")"
 done
