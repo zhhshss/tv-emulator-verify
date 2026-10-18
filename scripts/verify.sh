@@ -19,6 +19,20 @@ for i in $(seq 1 60); do
   sleep 5
 done
 adb shell getprop ro.product.cpu.abi ro.product.cpu.abilist | tee "$OUT/abi.txt"
+echo "== force zh-CN locale (reboot) =="
+adb root >/dev/null 2>&1 || true
+sleep 3
+adb wait-for-device || true
+adb shell "setprop persist.sys.locale zh-CN" || true
+adb reboot || true
+sleep 25
+for i in $(seq 1 60); do
+  [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ] && break
+  sleep 5
+done
+adb wait-for-device || true
+{ adb shell getprop persist.sys.locale; adb shell settings get system system_locales; } 2>/dev/null | tee "$OUT/locale.txt" || true
+
 adb shell settings put secure immersive_mode_confirmations confirmed || true
 echo "immersive confirmation suppressed"
 
