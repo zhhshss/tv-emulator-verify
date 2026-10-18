@@ -113,7 +113,7 @@ echo "== rex section pages (root am start) =="
 adb root >/dev/null 2>&1 || true
 sleep 4
 adb wait-for-device || true
-for spec in "08-rex-trending:trending_day" "09-rex-cn-series:cn_series" "10-rex-anime:anime"; do
+for spec in "08-rex-trending:trending_day" "09-rex-cn-series:cn_series" "10-rex-anime:anime_daily"; do
   name="${spec%%:*}"; skey="${spec##*:}"
   { adb shell am start -n "$PKG/com.fongmi.android.tv.ui.activity.RexSectionActivity" --es section_key "$skey" || true; } 2>&1 | tee -a "$OUT/amstart.txt"
   sleep 18
