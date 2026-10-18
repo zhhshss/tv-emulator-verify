@@ -1,0 +1,61 @@
+name: emulator-verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      apk_url:
+        description: APK direct link
+        required: false
+        type: string
+        default: https://github.com/zhhshss/tv-emulator-verify/releases/download/preview-96dbc1ef0/preview-app-debug.apk
+      api_level:
+        description: Emulator API level
+        required: false
+        type: string
+        default: "34"
+      bridge_sk_mode:
+        description: "Bridge key mode: off | invalid"
+        required: false
+        type: string
+        default: "off"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BRIDGE_MODE: ${{ inputs.bridge_sk_mode }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download APK
+        run: |
+          mkdir -p apk
+          curl -fL -o apk/preview-app-debug.apk "${{ inputs.apk_url }}"
+          ls -la apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run emulator verification
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ inputs.api_level }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash scripts/verify.sh
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 7
