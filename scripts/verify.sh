@@ -18,6 +18,8 @@ for i in $(seq 1 60); do
   sleep 5
 done
 adb shell getprop ro.product.cpu.abi ro.product.cpu.abilist | tee "$OUT/abi.txt"
+adb shell settings put secure immersive_mode_confirmations confirmed || true
+echo "immersive confirmation suppressed"
 
 echo "== fresh install =="
 adb uninstall "$PKG" >/dev/null 2>&1 || true
