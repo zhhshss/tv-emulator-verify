@@ -18,6 +18,11 @@ on:
         required: false
         type: string
         default: "off"
+      tmdb_mode:
+        description: "TMDB proxy mode: off | dead"
+        required: false
+        type: string
+        default: "off"
 
 jobs:
   verify:
@@ -25,6 +30,7 @@ jobs:
     timeout-minutes: 45
     env:
       BRIDGE_MODE: ${{ inputs.bridge_sk_mode }}
+      TMDB_MODE: ${{ inputs.tmdb_mode }}
     steps:
       - uses: actions/checkout@v4
 

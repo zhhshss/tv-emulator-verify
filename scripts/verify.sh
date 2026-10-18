@@ -6,6 +6,7 @@ PKG=com.fongmi.android.tv.preview
 OUT=artifacts
 mkdir -p "$OUT" work
 BRIDGE_MODE="${BRIDGE_MODE:-off}"
+TMDB_MODE="${TMDB_MODE:-off}"
 
 capture() { adb exec-out screencap -p > "$OUT/$1.png" 2>/dev/null || true; echo "captured $1"; }
 key() { adb shell input keyevent "$1" >/dev/null 2>&1 || true; sleep "${2:-1}"; }
@@ -42,9 +43,9 @@ PREFS=$(adb shell "run-as $PKG ls shared_prefs 2>/dev/null" | tr -d '\r' | head 
 [ -n "$PREFS" ] || PREFS="${PKG}_preferences.xml"
 echo "prefs file: [$PREFS]" | tee "$OUT/prefs-name.txt"
 adb shell "run-as $PKG sh -c 'cat shared_prefs/$PREFS 2>/dev/null'" > "$OUT/prefs-before.xml" 2>/dev/null || true
-python3 -I - "$OUT/prefs-before.xml" "work/prefs-after.xml" "$BRIDGE_MODE" <<'PY'
+python3 -I - "$OUT/prefs-before.xml" "work/prefs-after.xml" "$BRIDGE_MODE" "$TMDB_MODE" <<'PY'
 import io, re, sys
-src, dst, mode = sys.argv[1], sys.argv[2], sys.argv[3]
+src, dst, mode, tmdb = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 try:
     s = io.open(src, encoding='utf-8', errors='ignore').read()
 except FileNotFoundError:
@@ -61,8 +62,15 @@ if mode == 'invalid':
         s = re.sub(r'<string name="browse_bridge_sk">[^<]*</string>', '<string name="browse_bridge_sk">' + fake + '</string>', s)
     else:
         s = s.replace('</map>', '    <string name="browse_bridge_sk">' + fake + '</string>\n</map>')
+if tmdb == 'dead':
+    dead = 'http://127.0.0.1:9/'
+    k = 'tmdb_proxy_url'
+    if k in s:
+        s = re.sub(r'<string name="' + k + r'">[^<]*</string>', '<string name="' + k + '">' + dead + '</string>', s)
+    else:
+        s = s.replace('</map>', '    <string name="' + k + '">' + dead + '</string>\n</map>')
 io.open(dst, 'w', encoding='utf-8').write(s)
-print('prefs patched; bridge_mode=%s' % mode)
+print('prefs patched; bridge_mode=%s tmdb_mode=%s' % (mode, tmdb))
 PY
 cp work/prefs-after.xml "$OUT/prefs-after-redacted.xml" 2>/dev/null || true
 adb push work/prefs-after.xml /data/local/tmp/prefs-after.xml >/dev/null 2>&1 || true
