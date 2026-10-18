@@ -87,6 +87,22 @@ echo "== press center at bottom =="
 key KEYCODE_DPAD_CENTER 6
 capture 04-after-center
 
+echo "== rex section pages (root am start) =="
+adb root >/dev/null 2>&1 || true
+sleep 4
+adb wait-for-device || true
+for spec in "08-rex-trending:trending_day" "09-rex-cn-series:cn_series" "10-rex-anime:anime"; do
+  name="${spec%%:*}"; skey="${spec##*:}"
+  { adb shell am start -n "$PKG/com.fongmi.android.tv.ui.activity.RexSectionActivity" --es section_key "$skey" || true; } 2>&1 | tee -a "$OUT/amstart.txt"
+  sleep 18
+  capture "$name"
+  key KEYCODE_DPAD_RIGHT 1
+  key KEYCODE_DPAD_RIGHT 1
+  capture "$name-scroll"
+  adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
+  sleep 2
+done
+
 echo "== am start discover (shell) =="
 { adb shell am start -n "$PKG/com.fongmi.android.tv.ui.activity.DiscoverActivity" || true; } 2>&1 | tee -a "$OUT/amstart.txt"
 sleep 10

@@ -7,7 +7,7 @@ on:
         description: APK direct link
         required: false
         type: string
-        default: https://github.com/zhhshss/tv-emulator-verify/releases/download/preview-96dbc1ef0/preview-app-debug.apk
+        default: https://github.com/zhhshss/tv-emulator-verify/releases/download/preview-bb8c522b4/preview-app-debug.apk
       api_level:
         description: Emulator API level
         required: false
